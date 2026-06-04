@@ -1,0 +1,1908 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>StratOS — Strategy Intelligence Platform</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Jost:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    /* ─── LIGHT THEME (DEFAULT) ─── */
+    :root {
+      --bg:         #F8F5F0;
+      --surface:    #F2EDE7;
+      --card:       #FDFBF7;
+      --border:     rgba(0,0,0,0.09);
+      --gold:       #9B7625;
+      --gold-low:   rgba(155,118,37,0.07);
+      --gold-mid:   rgba(155,118,37,0.15);
+      --blue:       #2A54BC;
+      --blue-low:   rgba(42,84,188,0.07);
+      --green:      #1A8747;
+      --text:       #1C1D24;
+      --muted:      #7A756D;
+      --ff-d:       'Cormorant Garamond', Georgia, serif;
+      --ff-b:       'Jost', system-ui, sans-serif;
+      --ff-m:       'JetBrains Mono', monospace;
+      --max-w:      1200px;
+      --ease:       cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    /* ─── DARK THEME ─── */
+    [data-theme="dark"] {
+      --bg:         #060810;
+      --surface:    #0B0E18;
+      --card:       #0F1320;
+      --border:     rgba(255,255,255,0.07);
+      --gold:       #C4A35A;
+      --gold-low:   rgba(196,163,90,0.08);
+      --gold-mid:   rgba(196,163,90,0.18);
+      --blue:       #5B8DF7;
+      --blue-low:   rgba(91,141,247,0.08);
+      --green:      #3EC977;
+      --text:       #EDF1F8;
+      --muted:      #6A7384;
+    }
+
+    /* ─── RESET ─── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; font-size: 16px; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--ff-b);
+      font-weight: 300;
+      line-height: 1.65;
+      overflow-x: hidden;
+    }
+    a { color: inherit; text-decoration: none; }
+
+    /* ─── GRAIN TEXTURE ─── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+      opacity: 0.5;
+      pointer-events: none;
+      z-index: 9999;
+    }
+
+    /* ─── LAYOUT UTILS ─── */
+    .w { max-width: var(--max-w); margin: 0 auto; padding: 0 48px; }
+    .eyebrow {
+      font-family: var(--ff-m);
+      font-size: 10.5px;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 20px;
+    }
+    .mono { font-family: var(--ff-m); }
+
+    /* ─── REVEAL ANIMATION ─── */
+    .r {
+      opacity: 0;
+      transform: translateY(30px);
+      transition: opacity 0.75s var(--ease), transform 0.75s var(--ease);
+    }
+    .r.in { opacity: 1; transform: none; }
+
+    /* ─── NAV ─── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      height: 64px;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 48px;
+      border-bottom: 1px solid transparent;
+      transition: background 0.4s, border-color 0.4s, backdrop-filter 0.4s;
+    }
+    nav.on {
+      background: rgba(6,8,16,0.88);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border-color: var(--border);
+    }
+    .logo {
+      font-family: var(--ff-d);
+      font-size: 21px;
+      font-weight: 500;
+      letter-spacing: 0.05em;
+    }
+    .logo b { color: var(--gold); font-weight: 500; }
+    .nav-links {
+      display: flex; gap: 36px; list-style: none;
+      font-size: 13px; font-weight: 400; color: var(--muted); letter-spacing: 0.04em;
+    }
+    .nav-links a { transition: color 0.2s; }
+    .nav-links a:hover { color: var(--text); }
+    .nav-btn {
+      font-size: 12px; font-weight: 500; letter-spacing: 0.08em;
+      text-transform: uppercase; padding: 10px 24px;
+      border: 1px solid rgba(196,163,90,0.45); color: var(--gold);
+      transition: all 0.25s;
+    }
+    .nav-btn:hover { background: var(--gold); color: #060810; }
+
+    /* ─── HERO ─── */
+    #hero {
+      min-height: 100vh;
+      display: flex; align-items: center;
+      padding: 80px 0 0;
+      position: relative; overflow: hidden;
+    }
+    /* Ambient glow */
+    #hero .glow {
+      position: absolute;
+      border-radius: 50%;
+      pointer-events: none;
+    }
+    #hero .glow-1 {
+      top: -15%; right: -8%;
+      width: 680px; height: 680px;
+      background: radial-gradient(ellipse, rgba(196,163,90,0.07) 0%, transparent 65%);
+    }
+    #hero .glow-2 {
+      bottom: 5%; left: -10%;
+      width: 500px; height: 500px;
+      background: radial-gradient(ellipse, rgba(91,141,247,0.05) 0%, transparent 65%);
+    }
+    .hero-layout {
+      display: grid;
+      grid-template-columns: 1.05fr 0.95fr;
+      gap: 72px; align-items: center;
+      padding: 80px 0 120px;
+    }
+    /* LEFT */
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 10px;
+      padding: 6px 14px; border: 1px solid rgba(196,163,90,0.3);
+      margin-bottom: 32px;
+    }
+    .badge-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--gold);
+      animation: pulse 2.2s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%,100% { opacity:1; transform:scale(1); }
+      50%      { opacity:0.4; transform:scale(0.65); }
+    }
+    .badge-text {
+      font-family: var(--ff-m); font-size: 10px;
+      letter-spacing: 0.18em; text-transform: uppercase; color: var(--gold);
+    }
+    h1 {
+      font-family: var(--ff-d);
+      font-size: clamp(58px, 5.5vw, 82px);
+      font-weight: 400; line-height: 1.06;
+      letter-spacing: -0.015em;
+      margin-bottom: 28px;
+    }
+    h1 em { font-style: italic; color: var(--gold); }
+    .hero-sub {
+      font-size: 16px; line-height: 1.75; color: var(--muted);
+      max-width: 490px; margin-bottom: 44px; font-weight: 300;
+    }
+    .hero-ctas {
+      display: flex; gap: 16px; align-items: center;
+      margin-bottom: 56px;
+    }
+    .btn-g {
+      display: inline-block; padding: 14px 32px;
+      background: var(--gold); color: #060810;
+      font-size: 12px; font-weight: 600; letter-spacing: 0.1em;
+      text-transform: uppercase; transition: all 0.25s;
+    }
+    .btn-g:hover { background: #d4b36a; transform: translateY(-1px); }
+    .btn-t {
+      font-size: 13px; color: var(--muted); letter-spacing: 0.03em;
+      transition: all 0.25s; border-bottom: 1px solid transparent;
+    }
+    .btn-t:hover { color: var(--text); border-color: var(--muted); }
+    .hero-stats {
+      display: flex; border-top: 1px solid var(--border); padding-top: 32px; gap: 0;
+    }
+    .hstat {
+      flex: 1; padding-right: 28px;
+    }
+    .hstat + .hstat { padding-left: 28px; border-left: 1px solid var(--border); }
+    .hstat-num {
+      font-family: var(--ff-d); font-size: 38px; font-weight: 400;
+      line-height: 1; margin-bottom: 5px; color: var(--text);
+    }
+    .hstat-lbl {
+      font-family: var(--ff-m); font-size: 10px; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--muted);
+    }
+
+    /* RIGHT — PIPELINE VIZ */
+    .viz-wrap {
+      background: var(--card); border: 1px solid var(--border);
+      padding: 28px 28px 24px; position: relative;
+    }
+    /* Corner accents */
+    .viz-wrap::before, .viz-wrap::after {
+      content: ''; position: absolute;
+      width: 14px; height: 14px;
+      border-color: var(--gold); border-style: solid;
+      opacity: 0.35;
+    }
+    .viz-wrap::before { top: -1px; left: -1px; border-width: 2px 0 0 2px; }
+    .viz-wrap::after  { bottom: -1px; right: -1px; border-width: 0 2px 2px 0; }
+
+    .viz-header {
+      font-family: var(--ff-m); font-size: 9.5px; letter-spacing: 0.18em;
+      text-transform: uppercase; color: var(--muted);
+      display: flex; align-items: center; gap: 10px;
+      margin-bottom: 22px;
+    }
+    .viz-header::after { content:''; flex:1; height:1px; background:var(--border); }
+
+    /* 5 pipeline stages */
+    .pipeline {
+      display: grid; grid-template-columns: repeat(5, 1fr);
+      gap: 3px; margin-bottom: 3px;
+    }
+    .stage {
+      border: 1px solid var(--border);
+      padding: 13px 10px 14px;
+      transition: border-color 0.5s, background 0.5s;
+    }
+    .stage.on {
+      border-color: rgba(196,163,90,0.55);
+      background: var(--gold-low);
+    }
+    .stage-hd {
+      font-family: var(--ff-m); font-size: 8.5px; letter-spacing: 0.14em;
+      text-transform: uppercase; color: var(--muted);
+      margin-bottom: 9px; transition: color 0.5s;
+    }
+    .stage.on .stage-hd { color: var(--gold); }
+    .pill {
+      font-size: 10px; padding: 4px 7px;
+      background: rgba(255,255,255,0.03);
+      color: var(--muted); margin-bottom: 3px;
+      border-left: 2px solid transparent;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      transition: all 0.5s;
+    }
+    .stage.on .pill {
+      color: var(--text); border-left-color: var(--gold);
+      background: rgba(196,163,90,0.07);
+    }
+
+    /* Enrichment bar */
+    .enrich-bar {
+      border: 1px solid rgba(91,141,247,0.22);
+      background: var(--blue-low);
+      padding: 11px 14px;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .e-dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: var(--blue); flex-shrink: 0;
+      box-shadow: 0 0 8px rgba(91,141,247,0.4);
+      animation: pulse 1.8s ease-in-out infinite;
+    }
+    .e-text {
+      font-family: var(--ff-m); font-size: 9.5px;
+      letter-spacing: 0.1em; color: var(--blue);
+    }
+    .e-tags { margin-left: auto; display: flex; gap: 5px; }
+    .etag {
+      font-family: var(--ff-m); font-size: 8.5px; padding: 3px 8px;
+      border: 1px solid rgba(91,141,247,0.2); color: rgba(91,141,247,0.65);
+      letter-spacing: 0.07em;
+    }
+
+    /* Progress bar hint */
+    .viz-progress {
+      margin-top: 16px;
+      display: flex; gap: 3px;
+    }
+    .viz-prog-seg {
+      flex: 1; height: 2px; background: var(--border);
+      transition: background 0.5s;
+    }
+    .viz-prog-seg.on { background: var(--gold); }
+
+    /* ─── TRUST STRIP ─── */
+    #trust {
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      padding: 26px 0; background: var(--surface);
+    }
+    .trust-row { display: flex; align-items: center; gap: 40px; }
+    .trust-lbl {
+      font-family: var(--ff-m); font-size: 9.5px; letter-spacing: 0.18em;
+      text-transform: uppercase; color: var(--muted); white-space: nowrap; flex-shrink: 0;
+    }
+    .trust-sep { width: 1px; height: 18px; background: var(--border); flex-shrink: 0; }
+    .trust-logos { display: flex; gap: 36px; align-items: center; flex: 1; flex-wrap: wrap; }
+    .trust-logo {
+      font-family: var(--ff-d); font-size: 14.5px; font-weight: 500;
+      color: var(--muted); opacity: 0.55; letter-spacing: 0.04em; white-space: nowrap;
+    }
+
+    /* ─── GENERIC SECTION ─── */
+    section { padding: 128px 0; }
+    h2 {
+      font-family: var(--ff-d);
+      font-size: clamp(40px, 4vw, 58px);
+      font-weight: 400; line-height: 1.1;
+      letter-spacing: -0.01em; margin-bottom: 20px;
+    }
+    h2 em { font-style: italic; color: var(--gold); }
+    .sub {
+      font-size: 15.5px; line-height: 1.75;
+      color: var(--muted); font-weight: 300;
+    }
+    .sec-hd { max-width: 700px; margin-bottom: 72px; }
+    .sec-hd.cx { text-align: center; margin-left: auto; margin-right: auto; }
+
+    /* ─── PROBLEM ─── */
+    #problem .pg {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 80px; align-items: start;
+    }
+    .prob-left .sub { margin-top: 18px; max-width: 400px; }
+    .prob-items { display: flex; flex-direction: column; gap: 0; }
+    .prob-item {
+      padding: 30px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .prob-item:first-child { border-top: 1px solid var(--border); }
+    .prob-n {
+      font-family: var(--ff-m); font-size: 10px; letter-spacing: 0.18em;
+      color: var(--gold); margin-bottom: 10px;
+    }
+    .prob-t {
+      font-family: var(--ff-d); font-size: 21px; font-weight: 500;
+      margin-bottom: 9px;
+    }
+    .prob-d { font-size: 13.5px; line-height: 1.72; color: var(--muted); }
+
+    /* ─── FRAMEWORKS GRID ─── */
+    #frameworks {
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+    .fw-grid {
+      display: grid; grid-template-columns: repeat(4, 1fr);
+      border-top: 1px solid var(--border); border-left: 1px solid var(--border);
+    }
+    .fw-card {
+      padding: 28px 24px 26px;
+      border-right: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      transition: background 0.3s;
+    }
+    .fw-card:hover { background: var(--gold-low); }
+    .fw-icon-wrap {
+      width: 38px; height: 38px; margin-bottom: 16px;
+      color: var(--gold); opacity: 0.7;
+    }
+    .fw-name {
+      font-family: var(--ff-d); font-size: 17px; font-weight: 500;
+      margin-bottom: 8px;
+    }
+    .fw-desc {
+      font-size: 12px; line-height: 1.65; color: var(--muted); margin-bottom: 13px;
+    }
+    .fw-cat {
+      font-family: var(--ff-m); font-size: 9px; letter-spacing: 0.13em;
+      text-transform: uppercase; color: var(--gold); opacity: 0.65;
+    }
+
+    /* ─── HOW IT WORKS ─── */
+    .steps {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 0;
+      border-top: 1px solid var(--border);
+    }
+    .step {
+      padding: 40px 32px 40px 0;
+      border-right: 1px solid var(--border);
+    }
+    .step:last-child { border-right: none; padding-right: 0; }
+    .step:not(:first-child) { padding-left: 32px; }
+    .step-n {
+      font-family: var(--ff-d); font-size: 68px; font-weight: 300;
+      color: var(--gold); opacity: 0.14; line-height: 1;
+      margin-bottom: 18px;
+    }
+    .step-t {
+      font-family: var(--ff-d); font-size: 21px; font-weight: 500;
+      margin-bottom: 12px; line-height: 1.2;
+    }
+    .step-d { font-size: 13.5px; line-height: 1.72; color: var(--muted); }
+
+    /* ─── ENRICHMENT ─── */
+    #enrichment {
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+    .enrich-layout {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 80px; align-items: start;
+    }
+    .enrich-list { display: flex; flex-direction: column; gap: 2px; }
+    .ds {
+      background: var(--card); border: 1px solid var(--border);
+      padding: 18px 20px;
+      display: flex; align-items: center; gap: 16px;
+      transition: all 0.3s;
+    }
+    .ds:hover { border-color: rgba(196,163,90,0.28); background: var(--gold-low); }
+    .ds-live {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--green); flex-shrink: 0;
+      box-shadow: 0 0 8px rgba(62,201,119,0.45);
+      animation: blink 2.5s ease-in-out infinite;
+    }
+    @keyframes blink {
+      0%,100% { opacity:1; }
+      50%      { opacity:0.35; }
+    }
+    .ds-info { flex: 1; }
+    .ds-name { font-size: 13.5px; font-weight: 500; margin-bottom: 2px; }
+    .ds-desc { font-size: 11.5px; color: var(--muted); }
+    .ds-src {
+      font-family: var(--ff-m); font-size: 9px; letter-spacing: 0.09em;
+      color: var(--muted); border: 1px solid var(--border);
+      padding: 3px 8px; white-space: nowrap;
+    }
+    .feature-list { display: flex; flex-direction: column; gap: 26px; }
+    .feat {
+      border-left: 2px solid var(--border); padding-left: 20px;
+      transition: border-color 0.3s;
+    }
+    .feat:hover { border-left-color: var(--gold); }
+    .feat-t {
+      font-family: var(--ff-d); font-size: 18px; font-weight: 500;
+      margin-bottom: 6px;
+    }
+    .feat-d { font-size: 13px; line-height: 1.72; color: var(--muted); }
+
+    /* ─── NARRATIVE ─── */
+    #narrative .nar-layout {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 80px; align-items: start;
+    }
+    .pyr {
+      display: flex; flex-direction: column;
+      align-items: center; gap: 5px; margin-bottom: 20px;
+    }
+    .pb {
+      display: flex; align-items: center; justify-content: center;
+      text-align: center; padding: 14px 20px;
+      font-size: 12px; border: 1px solid var(--border);
+      transition: all 0.3s; position: relative;
+    }
+    .pb:hover { border-color: rgba(196,163,90,0.35); background: var(--gold-low); }
+    .pb-1 {
+      width: 100%;
+      background: var(--gold-low); border-color: rgba(196,163,90,0.35);
+      color: var(--gold); font-family: var(--ff-d); font-size: 15px; font-weight: 500;
+    }
+    .pb-2 { width: 83%; }
+    .pb-3 { width: 66%; }
+    .pb-4 { width: 50%; color: var(--muted); }
+    .pb-lbl {
+      position: absolute; left: calc(100% + 12px);
+      font-family: var(--ff-m); font-size: 8.5px; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--muted); white-space: nowrap;
+    }
+    .critique-box {
+      border: 1px solid var(--border); background: var(--card);
+      padding: 18px 22px;
+    }
+    .critique-hd {
+      font-family: var(--ff-m); font-size: 9.5px; letter-spacing: 0.13em;
+      text-transform: uppercase; color: var(--muted); margin-bottom: 10px;
+    }
+    .critique-txt { font-size: 12.5px; color: var(--muted); line-height: 1.65; }
+    .tag-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 12px; }
+    .ctag {
+      font-family: var(--ff-m); font-size: 8.5px; letter-spacing: 0.1em;
+      text-transform: uppercase; padding: 4px 10px;
+      border: 1px solid rgba(196,163,90,0.28); color: var(--gold); opacity: 0.75;
+    }
+
+    /* ─── PRICING ─── */
+    #pricing {
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+    }
+    .pricing-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 1px; background: var(--border);
+      border: 1px solid var(--border);
+    }
+    .pc {
+      background: var(--card); padding: 44px 36px;
+      position: relative;
+    }
+    .pc.hot {
+      background: rgba(196,163,90,0.03);
+    }
+    .pc.hot::before {
+      content: '';
+      position: absolute; top: -1px; left: 36px; right: 36px;
+      height: 3px; background: var(--gold);
+    }
+    .pc-badge {
+      display: inline-block;
+      font-family: var(--ff-m); font-size: 9px; letter-spacing: 0.14em;
+      text-transform: uppercase; padding: 4px 11px;
+      background: var(--gold-mid); color: var(--gold);
+      margin-bottom: 26px;
+    }
+    .pc-name {
+      font-family: var(--ff-d); font-size: 27px; font-weight: 500;
+      margin-bottom: 12px;
+    }
+    .pc-price {
+      font-family: var(--ff-d); font-size: 54px; font-weight: 300;
+      line-height: 1; margin-bottom: 5px;
+    }
+    .pc-price sup { font-size: 24px; font-weight: 300; vertical-align: super; }
+    .pc-price small { font-size: 18px; color: var(--muted); font-weight: 300; }
+    .pc-period { font-size: 12.5px; color: var(--muted); margin-bottom: 32px; }
+    .pc-div { height: 1px; background: var(--border); margin-bottom: 28px; }
+    .pc-list {
+      list-style: none; display: flex; flex-direction: column;
+      gap: 13px; margin-bottom: 36px;
+    }
+    .pc-list li {
+      font-size: 13.5px; color: var(--muted);
+      display: flex; align-items: flex-start; gap: 10px;
+    }
+    .pc-list li::before { content: '—'; color: var(--gold); flex-shrink: 0; opacity: 0.5; }
+    .pc-list li.hi { color: var(--text); }
+    .pc-list li.hi::before { opacity: 1; }
+    .pc-btn {
+      display: block; width: 100%; text-align: center;
+      padding: 13px; border: 1px solid var(--border);
+      font-size: 12px; font-weight: 500; letter-spacing: 0.08em;
+      text-transform: uppercase; color: var(--muted);
+      transition: all 0.25s; cursor: pointer;
+    }
+    .pc-btn:hover { border-color: var(--text); color: var(--text); }
+    .pc-btn.h {
+      background: var(--gold); border-color: var(--gold); color: #060810;
+    }
+    .pc-btn.h:hover { background: #d4b36a; }
+
+    /* ─── CTA ─── */
+    #cta {
+      text-align: center; padding: 144px 0;
+      position: relative; overflow: hidden;
+    }
+    #cta .glow-c {
+      position: absolute; top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 700px; height: 500px;
+      background: radial-gradient(ellipse, rgba(196,163,90,0.055) 0%, transparent 68%);
+      pointer-events: none;
+    }
+    #cta h2 { max-width: 620px; margin: 0 auto 18px; }
+    #cta .sub { max-width: 440px; margin: 0 auto 48px; }
+    .wl-form {
+      display: flex; gap: 0; max-width: 460px;
+      margin: 0 auto 16px;
+    }
+    .wl-form input {
+      flex: 1; background: var(--card);
+      border: 1px solid var(--border); border-right: none;
+      padding: 14px 20px; color: var(--text);
+      font-family: var(--ff-b); font-size: 14px; outline: none;
+      transition: border-color 0.25s;
+    }
+    .wl-form input::placeholder { color: var(--muted); }
+    .wl-form input:focus { border-color: rgba(196,163,90,0.45); }
+    .wl-form button {
+      padding: 14px 28px;
+      background: var(--gold); border: none; color: #060810;
+      font-family: var(--ff-b); font-size: 12px; font-weight: 600;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      cursor: pointer; transition: background 0.25s; white-space: nowrap;
+    }
+    .wl-form button:hover { background: #d4b36a; }
+    .cta-fine {
+      font-family: var(--ff-m); font-size: 10.5px;
+      letter-spacing: 0.08em; color: var(--muted); opacity: 0.6;
+    }
+
+    /* ─── FOOTER ─── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 44px 0; background: var(--surface);
+    }
+    .foot-row {
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .foot-logo {
+      font-family: var(--ff-d); font-size: 17px; font-weight: 400;
+      letter-spacing: 0.05em; color: var(--muted);
+    }
+    .foot-logo span { color: var(--gold); }
+    .foot-links {
+      display: flex; gap: 28px; list-style: none;
+    }
+    .foot-links a {
+      font-size: 12px; color: var(--muted); letter-spacing: 0.04em;
+      transition: color 0.2s;
+    }
+    .foot-links a:hover { color: var(--text); }
+    .foot-copy {
+      font-family: var(--ff-m); font-size: 10px;
+      color: var(--muted); opacity: 0.45; letter-spacing: 0.06em;
+    }
+
+    /* ─── SCROLL PROGRESS ─── */
+    #prog-bar {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 300;
+      height: 2px; pointer-events: none;
+    }
+    #prog-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--gold) 0%, rgba(196,163,90,0.6) 100%);
+      width: 0%; transition: width 0.08s linear;
+      box-shadow: 0 0 8px rgba(196,163,90,0.4);
+    }
+
+    /* ─── MOBILE NAV ─── */
+    .hamburger {
+      display: none; flex-direction: column; gap: 5px;
+      width: 26px; cursor: pointer; padding: 4px 0; border: none;
+      background: none; flex-shrink: 0;
+    }
+    .hamburger span {
+      display: block; height: 1.5px; background: var(--muted);
+      transition: all 0.32s var(--ease); transform-origin: center;
+    }
+    .hamburger.open span:nth-child(1) { transform: translateY(6.5px) rotate(45deg); background: var(--gold); }
+    .hamburger.open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
+    .hamburger.open span:nth-child(3) { transform: translateY(-6.5px) rotate(-45deg); background: var(--gold); }
+    .mob-menu {
+      display: none; position: fixed; inset: 64px 0 0 0;
+      background: rgba(6,8,16,0.97); backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      z-index: 98; flex-direction: column;
+      align-items: stretch; padding: 0 0 40px;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.28s var(--ease);
+    }
+    .mob-menu.open { opacity: 1; pointer-events: all; }
+    .mob-link {
+      display: block; padding: 22px 32px;
+      font-family: var(--ff-d); font-size: 30px; font-weight: 400;
+      color: var(--muted); border-bottom: 1px solid var(--border);
+      transition: color 0.2s;
+    }
+    .mob-link:hover { color: var(--text); }
+    .mob-cta {
+      display: block; margin: 32px 32px 0;
+      padding: 16px; text-align: center;
+      background: var(--gold); color: #060810;
+      font-size: 12px; font-weight: 600; letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    /* ─── HERO CANVAS ─── */
+    #hero-canvas {
+      position: absolute; inset: 0;
+      pointer-events: none; opacity: 0.45;
+    }
+
+    /* ─── COMPARISON ─── */
+    #comparison {
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+    .comp-grid {
+      display: grid; grid-template-columns: repeat(4, 1fr);
+      gap: 1px; background: var(--border);
+      border: 1px solid var(--border);
+    }
+    .cc {
+      background: var(--card); padding: 32px 26px;
+      position: relative;
+    }
+    .cc.star { background: var(--gold-low); }
+    .cc.star::before {
+      content: ''; position: absolute;
+      top: -1px; left: 0; right: 0;
+      height: 3px; background: var(--gold);
+    }
+    .cc-lbl {
+      font-family: var(--ff-m); font-size: 9px; letter-spacing: 0.18em;
+      text-transform: uppercase; color: var(--muted); margin-bottom: 16px;
+    }
+    .cc.star .cc-lbl { color: rgba(196,163,90,0.7); }
+    .cc-title {
+      font-family: var(--ff-d); font-size: 21px; font-weight: 500;
+      margin-bottom: 28px; line-height: 1.25;
+    }
+    .cc.star .cc-title { color: var(--gold); }
+    .cc-rows { display: flex; flex-direction: column; }
+    .cc-row {
+      display: flex; align-items: flex-start; gap: 10px;
+      padding: 10px 0; border-bottom: 1px solid var(--border);
+      font-size: 12px; line-height: 1.45; color: var(--muted);
+    }
+    .cc-row:last-child { border-bottom: none; padding-bottom: 0; }
+    .cc-row.hi { color: var(--text); }
+    .ic { font-family: var(--ff-m); font-size: 11px; flex-shrink: 0; margin-top: 1px; }
+    .ic.y { color: var(--green); }
+    .ic.n { color: var(--muted); opacity: 0.4; }
+    .ic.p { color: var(--gold); }
+    .cc-foot { border-top: 1px solid var(--border); padding-top: 20px; margin-top: 20px; }
+    .cc-cost {
+      font-family: var(--ff-d); font-size: 20px; font-weight: 400; margin-bottom: 3px;
+    }
+    .cc.star .cc-cost { color: var(--gold); }
+    .cc-time {
+      font-family: var(--ff-m); font-size: 9.5px;
+      letter-spacing: 0.08em; color: var(--muted);
+    }
+
+    /* ─── TESTIMONIALS ─── */
+    #testimonials { border-top: 1px solid var(--border); }
+    .testi-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 2px;
+    }
+    .tc {
+      background: var(--card); border: 1px solid var(--border);
+      padding: 36px 30px; transition: border-color 0.3s;
+    }
+    .tc:hover { border-color: rgba(196,163,90,0.28); }
+    .tc.hi { background: var(--gold-low); border-color: rgba(196,163,90,0.22); }
+    .tc-mark {
+      display: block; font-family: var(--ff-d); font-size: 64px;
+      line-height: 0.65; color: var(--gold); opacity: 0.16;
+      margin-bottom: 22px; font-style: normal;
+    }
+    .tc.hi .tc-mark { opacity: 0.32; }
+    .tc-q {
+      font-family: var(--ff-d); font-size: 17.5px; font-weight: 400;
+      line-height: 1.58; color: var(--text); margin-bottom: 28px;
+      font-style: italic;
+    }
+    .tc.hi .tc-q { font-weight: 500; }
+    .tc-sep { height: 1px; background: var(--border); margin-bottom: 20px; }
+    .tc-name { font-size: 13px; font-weight: 500; margin-bottom: 3px; }
+    .tc-role {
+      font-family: var(--ff-m); font-size: 9.5px;
+      letter-spacing: 0.09em; text-transform: uppercase; color: var(--muted);
+    }
+
+    /* ─── FAQ ─── */
+    #faq {
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+    .faq-layout {
+      display: grid; grid-template-columns: 320px 1fr;
+      gap: 80px; align-items: start;
+    }
+    .faq-sticky { position: sticky; top: 100px; }
+    .faq-items { display: flex; flex-direction: column; }
+    .fi { border-bottom: 1px solid var(--border); }
+    .fi:first-child { border-top: 1px solid var(--border); }
+    .fi-q {
+      display: flex; align-items: center;
+      justify-content: space-between; gap: 20px;
+      padding: 22px 0; cursor: pointer; user-select: none;
+    }
+    .fi-qt {
+      font-family: var(--ff-d); font-size: 18px;
+      font-weight: 500; line-height: 1.3; color: var(--text);
+      transition: color 0.2s;
+    }
+    .fi.open .fi-qt { color: var(--gold); }
+    .fi-ch {
+      width: 18px; height: 18px; flex-shrink: 0; color: var(--muted);
+      transition: transform 0.32s var(--ease), color 0.2s;
+    }
+    .fi.open .fi-ch { transform: rotate(180deg); color: var(--gold); }
+    .fi-a {
+      display: grid; grid-template-rows: 0fr;
+      transition: grid-template-rows 0.38s var(--ease);
+    }
+    .fi.open .fi-a { grid-template-rows: 1fr; }
+    .fi-a-inner {
+      overflow: hidden;
+      font-size: 14px; line-height: 1.76; color: var(--muted);
+    }
+    .fi-a-pad { padding-bottom: 24px; }
+
+    /* ─── RESPONSIVE (ADDITIONS) ─── */
+    @media (max-width: 960px) {
+      nav, .w { padding-left: 24px; padding-right: 24px; }
+      .nav-links, .nav-btn { display: none; }
+      .hamburger { display: flex; }
+      .mob-menu { display: flex; }
+      h1 { font-size: 50px; }
+      h2 { font-size: 38px; }
+      .hero-layout { grid-template-columns: 1fr; gap: 48px; padding: 60px 0 80px; }
+      .viz-wrap { display: none; }
+      .hero-stats { flex-direction: column; gap: 0; }
+      .hstat + .hstat { border-left: none; padding-left: 0; border-top: 1px solid var(--border); padding-top: 20px; margin-top: 20px; }
+      #problem .pg { grid-template-columns: 1fr; gap: 48px; }
+      .fw-grid { grid-template-columns: repeat(2, 1fr); }
+      .steps { grid-template-columns: 1fr 1fr; }
+      .step { padding: 28px 20px 28px 0 !important; border-right: 1px solid var(--border) !important; }
+      .step:nth-child(2n) { padding-right: 0 !important; border-right: none !important; padding-left: 20px !important; }
+      .enrich-layout { grid-template-columns: 1fr; gap: 48px; }
+      #narrative .nar-layout { grid-template-columns: 1fr; gap: 48px; }
+      .pricing-grid { grid-template-columns: 1fr; }
+      .comp-grid { grid-template-columns: 1fr 1fr; }
+      .comp-grid .cc:nth-child(2) { display: none; }
+      .testi-grid { grid-template-columns: 1fr; }
+      .faq-layout { grid-template-columns: 1fr; gap: 40px; }
+      .faq-sticky { position: static; }
+      .foot-row { flex-direction: column; gap: 20px; text-align: center; }
+      .foot-links { flex-wrap: wrap; justify-content: center; }
+      section { padding: 80px 0; }
+    }
+  </style>
+</head>
+<body>
+
+<div id="prog-bar"><div id="prog-fill"></div></div>
+
+<!-- NAV -->
+<nav id="nav">
+  <a href="#" class="logo">Strat<b>OS</b></a>
+  <ul class="nav-links">
+    <li><a href="#how">Product</a></li>
+    <li><a href="#frameworks">Frameworks</a></li>
+    <li><a href="#pricing">Pricing</a></li>
+    <li><a href="#">Documentation</a></li>
+  </ul>
+  <a href="#cta" class="nav-btn">Request access</a>
+  <button class="hamburger" id="hamburger" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+
+<!-- MOBILE MENU -->
+<div class="mob-menu" id="mob-menu">
+  <a href="#how"          class="mob-link" data-mob>Product</a>
+  <a href="#frameworks"   class="mob-link" data-mob>Frameworks</a>
+  <a href="#pricing"      class="mob-link" data-mob>Pricing</a>
+  <a href="#"             class="mob-link" data-mob>Documentation</a>
+  <a href="#cta"          class="mob-cta"  data-mob>Request access</a>
+</div>
+
+<!-- HERO -->
+<section id="hero">
+  <canvas id="hero-canvas"></canvas>
+  <div class="glow glow-1"></div>
+  <div class="glow glow-2"></div>
+  <div class="w">
+    <div class="hero-layout">
+
+      <!-- LEFT -->
+      <div class="hero-left">
+        <div class="hero-badge">
+          <div class="badge-dot"></div>
+          <span class="badge-text">Strategy Intelligence Platform</span>
+        </div>
+        <h1>Mirror McKinsey.<br><em>With your data.</em></h1>
+        <p class="hero-sub">StratOS sequences 12 interdependent strategy frameworks, enriches them with live macroeconomic and geopolitical signals, and structures your output for executive communication — one coherent workflow.</p>
+        <div class="hero-ctas">
+          <a href="#cta" class="btn-g">Request early access</a>
+          <a href="#frameworks" class="btn-t">Explore the frameworks →</a>
+        </div>
+        <div class="hero-stats">
+          <div class="hstat">
+            <div class="hstat-num" data-count="12">12</div>
+            <div class="hstat-lbl">Frameworks sequenced</div>
+          </div>
+          <div class="hstat">
+            <div class="hstat-num">Live</div>
+            <div class="hstat-lbl">Enrichment signals</div>
+          </div>
+          <div class="hstat">
+            <div class="hstat-num">MECE</div>
+            <div class="hstat-lbl">Hypothesis validation</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT — PIPELINE VIZ -->
+      <div class="viz-wrap">
+        <div class="viz-header">Strategy workflow pipeline</div>
+
+        <div class="pipeline" id="pipeline">
+          <div class="stage" data-i="0">
+            <div class="stage-hd">Scan</div>
+            <div class="pill">PESTEL</div>
+            <div class="pill">Porter 5</div>
+          </div>
+          <div class="stage" data-i="1">
+            <div class="stage-hd">Assess</div>
+            <div class="pill">Value Chain</div>
+            <div class="pill">BCG Matrix</div>
+          </div>
+          <div class="stage" data-i="2">
+            <div class="stage-hd">Synthesise</div>
+            <div class="pill">SWOT</div>
+            <div class="pill">Root Cause</div>
+          </div>
+          <div class="stage" data-i="3">
+            <div class="stage-hd">Options</div>
+            <div class="pill">Ansoff</div>
+            <div class="pill">Hypothesis</div>
+          </div>
+          <div class="stage" data-i="4">
+            <div class="stage-hd">Communicate</div>
+            <div class="pill">Pyramid</div>
+            <div class="pill">Slides</div>
+          </div>
+        </div>
+
+        <div class="enrich-bar">
+          <div class="e-dot"></div>
+          <span class="e-text">Live enrichment active</span>
+          <div class="e-tags">
+            <span class="etag">Macro</span>
+            <span class="etag">Sector</span>
+            <span class="etag">Geopolitical</span>
+          </div>
+        </div>
+
+        <div class="viz-progress" id="viz-prog">
+          <div class="viz-prog-seg"></div>
+          <div class="viz-prog-seg"></div>
+          <div class="viz-prog-seg"></div>
+          <div class="viz-prog-seg"></div>
+          <div class="viz-prog-seg"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- TRUST STRIP -->
+<div id="trust">
+  <div class="w">
+    <div class="trust-row">
+      <span class="trust-lbl">Designed for strategy leaders at</span>
+      <div class="trust-sep"></div>
+      <div class="trust-logos">
+        <span class="trust-logo">Kering Group</span>
+        <span class="trust-logo">Thales</span>
+        <span class="trust-logo">BCG</span>
+        <span class="trust-logo">Alstom</span>
+        <span class="trust-logo">LVMH</span>
+        <span class="trust-logo">Chanel</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- COMPARISON -->
+<section id="comparison">
+  <div class="w">
+    <div class="sec-hd r">
+      <div class="eyebrow">Why StratOS</div>
+      <h2>Not another template.<br>Not another <em>chatbot.</em></h2>
+      <p class="sub">Strategy tools fail in one of three ways — they are disconnected, generic, or inaccessible. StratOS was designed around the specific gap none of them fill.</p>
+    </div>
+    <div class="comp-grid r">
+
+      <div class="cc">
+        <div class="cc-lbl">Alternative 01</div>
+        <div class="cc-title">Spreadsheet templates</div>
+        <div class="cc-rows">
+          <div class="cc-row"><span class="ic n">✗</span> Framework sequencing enforced</div>
+          <div class="cc-row"><span class="ic n">✗</span> Dependency logic between frameworks</div>
+          <div class="cc-row"><span class="ic n">✗</span> Real-time macro enrichment</div>
+          <div class="cc-row"><span class="ic n">✗</span> Company document RAG</div>
+          <div class="cc-row"><span class="ic n">✗</span> MECE hypothesis validation</div>
+          <div class="cc-row"><span class="ic n">✗</span> Pyramid Principle output</div>
+          <div class="cc-row"><span class="ic y">✓</span> Reusable structure</div>
+        </div>
+        <div class="cc-foot">
+          <div class="cc-cost">Low cost</div>
+          <div class="cc-time">Days of manual work per engagement</div>
+        </div>
+      </div>
+
+      <div class="cc">
+        <div class="cc-lbl">Alternative 02</div>
+        <div class="cc-title">Generic AI assistants</div>
+        <div class="cc-rows">
+          <div class="cc-row"><span class="ic n">✗</span> Framework sequencing enforced</div>
+          <div class="cc-row"><span class="ic n">✗</span> Dependency logic between frameworks</div>
+          <div class="cc-row"><span class="ic p">~</span> Real-time data — inconsistent</div>
+          <div class="cc-row"><span class="ic n">✗</span> Company document grounding</div>
+          <div class="cc-row"><span class="ic n">✗</span> MECE hypothesis validation</div>
+          <div class="cc-row"><span class="ic n">✗</span> Structured Pyramid output</div>
+          <div class="cc-row"><span class="ic n">✗</span> Auditability and version history</div>
+        </div>
+        <div class="cc-foot">
+          <div class="cc-cost">Low cost</div>
+          <div class="cc-time">Fast but unstructured, unverifiable</div>
+        </div>
+      </div>
+
+      <div class="cc">
+        <div class="cc-lbl">Alternative 03</div>
+        <div class="cc-title">Strategy consulting firms</div>
+        <div class="cc-rows">
+          <div class="cc-row"><span class="ic y">✓</span> Framework sequencing enforced</div>
+          <div class="cc-row"><span class="ic y">✓</span> Dependency logic between frameworks</div>
+          <div class="cc-row"><span class="ic y">✓</span> Real-time market enrichment</div>
+          <div class="cc-row"><span class="ic y">✓</span> Company context integrated</div>
+          <div class="cc-row"><span class="ic y">✓</span> MECE hypothesis validation</div>
+          <div class="cc-row"><span class="ic y">✓</span> Structured communication output</div>
+          <div class="cc-row"><span class="ic n">✗</span> Reusable and iterable</div>
+        </div>
+        <div class="cc-foot">
+          <div class="cc-cost">€20k – €500k</div>
+          <div class="cc-time">6 – 12 weeks per engagement</div>
+        </div>
+      </div>
+
+      <div class="cc star">
+        <div class="cc-lbl">StratOS</div>
+        <div class="cc-title">Strategy OS</div>
+        <div class="cc-rows">
+          <div class="cc-row hi"><span class="ic y">✓</span> Framework sequencing enforced</div>
+          <div class="cc-row hi"><span class="ic y">✓</span> Dependency DAG — always consistent</div>
+          <div class="cc-row hi"><span class="ic y">✓</span> Live macro, sector, geopolitical data</div>
+          <div class="cc-row hi"><span class="ic y">✓</span> RAG over your own documents</div>
+          <div class="cc-row hi"><span class="ic y">✓</span> Automated MECE validation</div>
+          <div class="cc-row hi"><span class="ic y">✓</span> Pyramid Principle narrative</div>
+          <div class="cc-row hi"><span class="ic y">✓</span> Versioned, iterable, reusable</div>
+        </div>
+        <div class="cc-foot">
+          <div class="cc-cost">From €0</div>
+          <div class="cc-time">Hours, not weeks. Yours to iterate.</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- PROBLEM -->
+<section id="problem">
+  <div class="w">
+    <div class="pg r">
+      <div class="prob-left">
+        <div class="eyebrow">The problem</div>
+        <h2>Frameworks are taught in isolation.<br><em>Strategy is not.</em></h2>
+        <p class="sub">The gap between a business school education and a real engagement is how you sequence, connect, and communicate the analysis.</p>
+      </div>
+      <div class="prob-items">
+        <div class="prob-item">
+          <div class="prob-n">01</div>
+          <div class="prob-t">Disconnected tools</div>
+          <p class="prob-d">PESTEL, Porter, and SWOT are run in isolation. No system enforces that your competitive analysis informs your portfolio decisions, or that your value chain audit feeds your synthesis. The dependency graph is invisible — and broken.</p>
+        </div>
+        <div class="prob-item">
+          <div class="prob-n">02</div>
+          <div class="prob-t">Stale context</div>
+          <p class="prob-d">Analyses built on last quarter's reports miss rate movements, regulatory shifts, and competitor pivots happening in real time. The strategy is already outdated when it lands in the boardroom.</p>
+        </div>
+        <div class="prob-item">
+          <div class="prob-n">03</div>
+          <div class="prob-t">Communication left to chance</div>
+          <p class="prob-d">Insights that survive the analysis rarely survive the presentation. Without a structured communication methodology, strategy decks bury the governing answer under forty slides of evidence.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FRAMEWORKS -->
+<section id="frameworks">
+  <div class="w">
+    <div class="sec-hd r">
+      <div class="eyebrow">Framework coverage</div>
+      <h2>12 frameworks.<br><em>Sequenced. Interconnected.</em></h2>
+      <p class="sub">Every framework is a plugin with defined inputs, outputs, and upstream dependencies. The orchestrator enforces the dependency graph — SWOT cannot run before Porter and Value Chain complete.</p>
+    </div>
+    <div class="fw-grid r">
+
+      <!-- PESTEL -->
+      <div class="fw-card">
+        <div class="fw-icon-wrap">
+          <svg viewBox="0 0 38 38" fill="none" xmlns="http://www.w3.org/2000/svg" width="38" height="38">
+            <polygon points="19,3 34,12 34,26 19,35 4,26 4,12" stroke="currentColor" stroke-width="1.5"/>
+            <line x1="19" y1="3" x2="19" y2="35" stroke="currentColor" stroke-width="0.8" opacity="0.35"/>
+            <line x1="4" y1="12" x2="34" y2="26" stroke="currentColor" stroke-width="0.8" opacity="0.35"/>
+            <line x1="34" y1="12" x2="4" y2="26" stroke="currentColor" stroke-width="0.8" opacity="0.35"/>
+          </svg>
+        </div>
+        <div class="fw-name">PESTEL</div>
+        <div class="fw-desc">Macro-environment scan across six dimensions, enriched with live economic, regulatory, and geopolitical signals.</div>
+        <div class="fw-cat">Environment scan</div>
+      </div>
+
+      <!-- PORTER 5 -->
+      <div class="fw-card">
+        <div class="fw-icon-wrap">
+          <svg viewBox="0 0 38 38" fill="none" xmlns="http://www.w3.org/2000/svg" width="38" height="38">
+            <polygon points="19,4 34,13 34,25 19,34 4,25 4,13" stroke="currentColor" stroke-width="1.5"/>
+            <line x1="19" y1="4"  x2="19" y2="19" stroke="currentColor" stroke-width="0.9" opacity="0.5"/>
+            <line x1="34" y1="13" x2="19" y2="19" stroke="currentColor" stroke-width="0.9" opacity="0.5"/>
+            <line x1="34" y1="25" x2="19" y2="19" stroke="currentColor" stroke-width="0.9" opacity="0.5"/>
+            <line x1="19" y1="34" x2="19" y2="19" stroke="currentColor" stroke-width="0.9" opacity="0.5"/>
+            <line x1="4"  y1="25" x2="19" y2="19" stroke="currentColor" stroke-width="0.9" opacity="0.5"/>
+            <line x1="4"  y1="13" x2="19" y2="19" stroke="currentColor" stroke-width="0.9" opacity="0.5"/>
+            <circle cx="19" cy="19" r="2.5" fill="currentColor" opacity="0.6"/>
+          </svg>
+        </div>
+        <div class="fw-name">Porter's Five Forces</div>
+        <div class="fw-desc">Industry attractiveness scored on rivalry, new entrants, substitutes, and buyer and supplier bargaining power.</div>
+        <div class="fw-cat">Environment scan</div>
+      </div>
+
+      <!-- VALUE CHAIN -->
+      <div class="fw-card">
+        <div class="fw-icon-wrap">
+          <svg viewBox="0 0 38 38" fill="none" xmlns="http://www.w3.org/2000/svg" width="38" height="38">
+            <rect x="3"  y="11" width="7" height="16" stroke="currentColor" stroke-width="1.5"/>
+            <rect x="13" y="7"  width="7" height="24" stroke="currentColor" stroke-width="1.5"/>
+            <rect x="23" y="11" width="7" height="16" stroke="currentColor" stroke-width="1.5"/>
+            <line x1="10" y1="19" x2="13" y2="19" stroke="currentColor" stroke-width="1.2" opacity="0.55"/>
+            <line x1="20" y1="19" x2="23" y2="19" stroke="currentColor" stroke-width="1.2" opacity="0.55"/>
+            <line x1="30" y1="19" x2="34" y2="19" stroke="currentColor" stroke-width="1.2" marker-end="none" opacity="0.45"/>
+          </svg>
+        </div>
+        <div class="fw-name">Value Chain</div>
+        <div class="fw-desc">Porter's value chain decomposed into primary and support activities with margin and differentiation scoring.</div>
+        <div class="fw-cat">Internal assessment</div>
+      </div>
+
+      <!-- BCG -->
+      <div class="fw-card">
+        <div class="fw-icon-wrap">
+          <svg viewBox="0 0 38 38" fill="none" xmlns="http://www.w3.org/2000/svg" width="38" height="38">
+            <rect x="3"  y="3"  width="15" height="15" stroke="currentColor" stroke-width="1.5"/>
+            <rect x="20" y="3"  width="15" height="15" stroke="currentColor" stroke-width="1.5"/>
+            <rect x="3"  y="20" width="15" height="15" stroke="currentColor" stroke-width="1.5"/>
+            <rect x="20" y="20" width="15" height="15" stroke="currentColor" stroke-width="1.5"/>
+            <circle cx="27.5" cy="10.5" r="4"   fill="currentColor" opacity="0.55"/>
+            <circle cx="10.5" cy="10.5" r="2.5" fill="currentColor" opacity="0.3"/>
+            <circle cx="27.5" cy="27.5" r="1.5" fill="currentColor" opacity="0.2"/>
+            <circle cx="10.5" cy="27.5" r="3"   fill="currentColor" opacity="0.22"/>
+          </svg>
+        </div>
+        <div class="fw-name">BCG Matrix</div>
+        <div class="fw-desc">Portfolio analysis positioning business units by market growth rate and relative market share, with investment priority scoring.</div>
+        <div class="fw-cat">Portfolio assessment</div>
+      </div>
+
+      <!-- SWOT -->
+      <div class="fw-card">
+        <div class="fw-icon-wrap">
+          <svg viewBox="0 0 38 38" fill="none" xmlns="http://www.w3.org/2000/svg" width="38" height="38">
+            <rect x="3"  y="3"  width="15" height="15" stroke="currentColor" stroke-width="1.5"/>
+            <rect x="20" y="3"  width="15" height="15" stroke="currentColor" stroke-width="1.5"/>
+            <rect x="3"  y="20" width="15" height="15" stroke="currentColor" stroke-width="1.5"/>
+            <rect x="20" y="20" width="15" height="15" stroke="currentColor" stroke-width="1.5"/>
+            <text x="10.5" y="13.5" font-family="monospace" font-size="7" fill="currentColor" text-anchor="middle" opacity="0.7">S</text>
+            <text x="27.5" y="13.5" font-family="monospace" font-size="7" fill="currentColor" text-anchor="middle" opacity="0.7">W</text>
+            <text x="10.5" y="30.5" font-family="monospace" font-size="7" fill="currentColor" text-anchor="middle" opacity="0.7">O</text>
+            <text x="27.5" y="30.5" font-family="monospace" font-size="7" fill="currentColor" text-anchor="middle" opacity="0.7">T</text>
+          </svg>
+        </div>
+        <div class="fw-name">SWOT</div>
+        <div class="fw-desc">Cross-synthesis of upstream frameworks into a structured strength-weakness-opportunity-threat matrix with derived SO/WO/ST/WT strategies.</div>
+        <div class="fw-cat">Synthesis</div>
+      </div>
+
+      <!-- ANSOFF -->
+      <div class="fw-card">
+        <div class="fw-icon-wrap">
+          <svg viewBox="0 0 38 38" fill="none" xmlns="http://www.w3.org/2000/svg" width="38" height="38">
+            <rect x="3"  y="3"  width="15" height="15" stroke="currentColor" stroke-width="1.5"/>
+            <rect x="20" y="3"  width="15" height="15" stroke="currentColor" stroke-width="1.5"/>
+            <rect x="3"  y="20" width="15" height="15" stroke="currentColor" stroke-width="1.5"/>
+            <rect x="20" y="20" width="15" height="15" stroke="currentColor" stroke-width="1.5"/>
+            <path d="M10.5,17 L10.5,21" stroke="currentColor" stroke-width="1.3" opacity="0.55"/>
+            <path d="M18,10.5 L22,10.5" stroke="currentColor" stroke-width="1.3" opacity="0.55"/>
+            <path d="M27.5,17 L27.5,21" stroke="currentColor" stroke-width="1.3" opacity="0.55"/>
+            <path d="M18,27.5 L22,27.5" stroke="currentColor" stroke-width="1.3" opacity="0.3"/>
+          </svg>
+        </div>
+        <div class="fw-name">Ansoff Matrix</div>
+        <div class="fw-desc">Growth vector analysis mapping market penetration, development, product extension, and diversification with risk profiles and investment horizons.</div>
+        <div class="fw-cat">Strategic options</div>
+      </div>
+
+      <!-- SIPOC -->
+      <div class="fw-card">
+        <div class="fw-icon-wrap">
+          <svg viewBox="0 0 38 38" fill="none" xmlns="http://www.w3.org/2000/svg" width="38" height="38">
+            <rect x="2"  y="10" width="6" height="18" stroke="currentColor" stroke-width="1.5"/>
+            <rect x="11" y="14" width="5" height="10" stroke="currentColor" stroke-width="1.5"/>
+            <rect x="19" y="11" width="5" height="16" stroke="currentColor" stroke-width="1.5"/>
+            <rect x="27" y="14" width="5" height="10" stroke="currentColor" stroke-width="1.5"/>
+            <line x1="8"  y1="19" x2="11" y2="19" stroke="currentColor" stroke-width="1.4"/>
+            <line x1="16" y1="19" x2="19" y2="19" stroke="currentColor" stroke-width="1.4"/>
+            <line x1="24" y1="19" x2="27" y2="19" stroke="currentColor" stroke-width="1.4"/>
+            <line x1="32" y1="19" x2="36" y2="19" stroke="currentColor" stroke-width="1.4" opacity="0.45"/>
+          </svg>
+        </div>
+        <div class="fw-name">SIPOC</div>
+        <div class="fw-desc">Process architecture mapping suppliers, inputs, process steps, outputs, and customers with critical-to-quality identification and gap analysis.</div>
+        <div class="fw-cat">Execution design</div>
+      </div>
+
+      <!-- ROOT CAUSE -->
+      <div class="fw-card">
+        <div class="fw-icon-wrap">
+          <svg viewBox="0 0 38 38" fill="none" xmlns="http://www.w3.org/2000/svg" width="38" height="38">
+            <circle cx="19" cy="31" r="3"   stroke="currentColor" stroke-width="1.5"/>
+            <circle cx="11" cy="21" r="3"   stroke="currentColor" stroke-width="1.5"/>
+            <circle cx="27" cy="21" r="3"   stroke="currentColor" stroke-width="1.5"/>
+            <circle cx="5"  cy="12" r="2.5" stroke="currentColor" stroke-width="1.2" opacity="0.65"/>
+            <circle cx="16" cy="12" r="2.5" stroke="currentColor" stroke-width="1.2" opacity="0.65"/>
+            <circle cx="22" cy="12" r="2.5" stroke="currentColor" stroke-width="1.2" opacity="0.65"/>
+            <circle cx="33" cy="12" r="2.5" stroke="currentColor" stroke-width="1.2" opacity="0.65"/>
+            <line x1="19" y1="28" x2="11" y2="24"  stroke="currentColor" stroke-width="1"/>
+            <line x1="19" y1="28" x2="27" y2="24"  stroke="currentColor" stroke-width="1"/>
+            <line x1="11" y1="18" x2="5"  y2="14.5" stroke="currentColor" stroke-width="1" opacity="0.6"/>
+            <line x1="11" y1="18" x2="16" y2="14.5" stroke="currentColor" stroke-width="1" opacity="0.6"/>
+            <line x1="27" y1="18" x2="22" y2="14.5" stroke="currentColor" stroke-width="1" opacity="0.6"/>
+            <line x1="27" y1="18" x2="33" y2="14.5" stroke="currentColor" stroke-width="1" opacity="0.6"/>
+          </svg>
+        </div>
+        <div class="fw-name">Root Cause Analysis</div>
+        <div class="fw-desc">Causal diagnosis via Fishbone, Five Whys, or Fault Tree — persisted as a graph in FalkorDB for evidence tracing and cross-framework attribution.</div>
+        <div class="fw-cat">Diagnosis</div>
+      </div>
+
+      <!-- HYPOTHESIS FORMATION -->
+      <div class="fw-card">
+        <div class="fw-icon-wrap">
+          <svg viewBox="0 0 38 38" fill="none" xmlns="http://www.w3.org/2000/svg" width="38" height="38">
+            <path d="M19,4 L19,20" stroke="currentColor" stroke-width="1.5"/>
+            <path d="M8,20 L30,20" stroke="currentColor" stroke-width="1.5"/>
+            <path d="M8,20 L4,34" stroke="currentColor" stroke-width="1.2" opacity="0.65"/>
+            <path d="M8,20 L13,34" stroke="currentColor" stroke-width="1.2" opacity="0.65"/>
+            <path d="M30,20 L26,34" stroke="currentColor" stroke-width="1.2" opacity="0.65"/>
+            <path d="M30,20 L34,34" stroke="currentColor" stroke-width="1.2" opacity="0.65"/>
+            <circle cx="19" cy="4" r="2.5" fill="currentColor" opacity="0.7"/>
+            <circle cx="8"  cy="20" r="2"  fill="currentColor" opacity="0.55"/>
+            <circle cx="30" cy="20" r="2"  fill="currentColor" opacity="0.55"/>
+          </svg>
+        </div>
+        <div class="fw-name">Hypothesis Formation</div>
+        <div class="fw-desc">Structured derivation of the governing strategic question from SWOT and Ansoff outputs, forming the root of the hypothesis tree.</div>
+        <div class="fw-cat">Logic structure</div>
+      </div>
+
+      <!-- HYPOTHESIS TREE -->
+      <div class="fw-card">
+        <div class="fw-icon-wrap">
+          <svg viewBox="0 0 38 38" fill="none" xmlns="http://www.w3.org/2000/svg" width="38" height="38">
+            <circle cx="19" cy="7"  r="3.5" stroke="currentColor" stroke-width="1.5"/>
+            <circle cx="10" cy="19" r="3"   stroke="currentColor" stroke-width="1.5"/>
+            <circle cx="28" cy="19" r="3"   stroke="currentColor" stroke-width="1.5"/>
+            <circle cx="5"  cy="31" r="2.5" stroke="currentColor" stroke-width="1.2" opacity="0.6"/>
+            <circle cx="15" cy="31" r="2.5" stroke="currentColor" stroke-width="1.2" opacity="0.6"/>
+            <circle cx="23" cy="31" r="2.5" stroke="currentColor" stroke-width="1.2" opacity="0.6"/>
+            <circle cx="33" cy="31" r="2.5" stroke="currentColor" stroke-width="1.2" opacity="0.6"/>
+            <line x1="19" y1="10.5" x2="10" y2="16"  stroke="currentColor" stroke-width="1.1"/>
+            <line x1="19" y1="10.5" x2="28" y2="16"  stroke="currentColor" stroke-width="1.1"/>
+            <line x1="10" y1="22"   x2="5"  y2="28.5" stroke="currentColor" stroke-width="1" opacity="0.6"/>
+            <line x1="10" y1="22"   x2="15" y2="28.5" stroke="currentColor" stroke-width="1" opacity="0.6"/>
+            <line x1="28" y1="22"   x2="23" y2="28.5" stroke="currentColor" stroke-width="1" opacity="0.6"/>
+            <line x1="28" y1="22"   x2="33" y2="28.5" stroke="currentColor" stroke-width="1" opacity="0.6"/>
+          </svg>
+        </div>
+        <div class="fw-name">Hypothesis Tree</div>
+        <div class="fw-desc">MECE decomposition of the governing strategic question into testable leaf hypotheses, persisted in FalkorDB with automated overlap and gap detection.</div>
+        <div class="fw-cat">Logic structure</div>
+      </div>
+
+      <!-- HYPOTHESIS TESTING -->
+      <div class="fw-card">
+        <div class="fw-icon-wrap">
+          <svg viewBox="0 0 38 38" fill="none" xmlns="http://www.w3.org/2000/svg" width="38" height="38">
+            <circle cx="19" cy="19" r="14" stroke="currentColor" stroke-width="1.5"/>
+            <path d="M12,19 L17,24 L26,13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <div class="fw-name">Hypothesis Testing</div>
+        <div class="fw-desc">Automated evidence gathering via targeted web search and RAG retrieval per leaf hypothesis, with SUPPORTED / REJECTED / INCONCLUSIVE verdicts and confidence scoring.</div>
+        <div class="fw-cat">Validation</div>
+      </div>
+
+      <!-- PYRAMID -->
+      <div class="fw-card">
+        <div class="fw-icon-wrap">
+          <svg viewBox="0 0 38 38" fill="none" xmlns="http://www.w3.org/2000/svg" width="38" height="38">
+            <polygon points="19,4 35,34 3,34" stroke="currentColor" stroke-width="1.5"/>
+            <line x1="10" y1="21" x2="28" y2="21" stroke="currentColor" stroke-width="0.9" opacity="0.45"/>
+            <line x1="14" y1="28" x2="24" y2="28" stroke="currentColor" stroke-width="0.9" opacity="0.35"/>
+          </svg>
+        </div>
+        <div class="fw-name">Pyramid Principle</div>
+        <div class="fw-desc">Minto's Pyramid applied to structure the governing thought, SCQA frame, key lines, and supporting evidence into a boardroom-ready, answer-first narrative.</div>
+        <div class="fw-cat">Communication</div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section id="how">
+  <div class="w">
+    <div class="sec-hd r">
+      <div class="eyebrow">How StratOS works</div>
+      <h2>Four steps from context<br>to <em>communication.</em></h2>
+    </div>
+    <div class="steps r">
+      <div class="step">
+        <div class="step-n">01</div>
+        <div class="step-t">Load your company context</div>
+        <p class="step-d">Upload financial statements, strategy documents, and reports. Set industry, geographies, revenue band, and strategic challenges. StratOS indexes your documents in Qdrant for hybrid RAG retrieval throughout the analysis.</p>
+      </div>
+      <div class="step">
+        <div class="step-n">02</div>
+        <div class="step-t">Enrich with live intelligence</div>
+        <p class="step-d">Before any framework runs, the enrichment agent pulls live macroeconomic indicators, sector dynamics, competitor moves, and geopolitical risk scores — partitioned and injected into the frameworks that need them.</p>
+      </div>
+      <div class="step">
+        <div class="step-n">03</div>
+        <div class="step-t">Execute the framework sequence</div>
+        <p class="step-d">The LangGraph orchestrator enforces the dependency DAG. Each output is self-critiqued before flowing downstream. Human review checkpoints are mandatory at SWOT synthesis and hypothesis tree approval — you are always in control.</p>
+      </div>
+      <div class="step">
+        <div class="step-n">04</div>
+        <div class="step-t">Generate your narrative and slides</div>
+        <p class="step-d">The synthesis agent identifies cross-framework convergences and contradictions. The narrative agent applies the Pyramid Principle. The slide agent produces a self-contained HTML deck — insight-first titles, pre-rendered SVG charts, speaker notes included.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ENRICHMENT -->
+<section id="enrichment">
+  <div class="w">
+    <div class="enrich-layout">
+      <div class="r">
+        <div class="eyebrow">Real-time intelligence</div>
+        <h2>Your analysis is only as good<br>as your <em>data.</em></h2>
+        <p class="sub" style="margin-top:18px;margin-bottom:36px;">StratOS pulls live signals from macro, sector, and geopolitical sources before frameworks execute. Every claim is traceable to a timestamped data source. Stale analyses are flagged automatically.</p>
+        <div class="feature-list">
+          <div class="feat">
+            <div class="feat-t">Concurrent signal fetching</div>
+            <p class="feat-d">All enrichment sources are queried in parallel at session start. Individual source failures are soft-handled — partial enrichment never blocks the workflow.</p>
+          </div>
+          <div class="feat">
+            <div class="feat-t">Framework-scoped injection</div>
+            <p class="feat-d">Macro signals go to PESTEL. Competitor intelligence goes to Porter. Value Chain receives input cost indices. Each framework receives exactly what it needs — nothing more.</p>
+          </div>
+          <div class="feat">
+            <div class="feat-t">Hypothesis-time targeted search</div>
+            <p class="feat-d">During hypothesis testing, the agent issues a targeted web search per leaf hypothesis. Evidence is retrieved, evaluated, and scored against three verdicts with a quantified confidence score.</p>
+          </div>
+        </div>
+      </div>
+      <div class="enrich-list r">
+        <div class="ds">
+          <div class="ds-live"></div>
+          <div class="ds-info">
+            <div class="ds-name">Macroeconomic signals</div>
+            <div class="ds-desc">GDP, inflation, interest rates, FX — by country of operation</div>
+          </div>
+          <span class="ds-src">OECD / World Bank</span>
+        </div>
+        <div class="ds">
+          <div class="ds-live"></div>
+          <div class="ds-info">
+            <div class="ds-name">Sector dynamics</div>
+            <div class="ds-desc">M&amp;A activity, PE multiples, disruption signals, competitor news</div>
+          </div>
+          <span class="ds-src">Web search</span>
+        </div>
+        <div class="ds">
+          <div class="ds-live"></div>
+          <div class="ds-info">
+            <div class="ds-name">Geopolitical risk</div>
+            <div class="ds-desc">Country risk scores, trade tensions, sector-specific regulatory changes</div>
+          </div>
+          <span class="ds-src">OECD Country Risk</span>
+        </div>
+        <div class="ds">
+          <div class="ds-live"></div>
+          <div class="ds-info">
+            <div class="ds-name">Financial benchmarks</div>
+            <div class="ds-desc">Sector PE ratios, EV/EBITDA multiples, revenue growth benchmarks</div>
+          </div>
+          <span class="ds-src">Alpha Vantage</span>
+        </div>
+        <div class="ds">
+          <div class="ds-live"></div>
+          <div class="ds-info">
+            <div class="ds-name">Company knowledge base</div>
+            <div class="ds-desc">Hybrid RAG over uploaded documents — dense + sparse + cross-encoder reranking</div>
+          </div>
+          <span class="ds-src">Qdrant / Voyage</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- NARRATIVE / PYRAMID -->
+<section id="narrative">
+  <div class="w">
+    <div class="nar-layout">
+      <div class="r">
+        <div class="eyebrow">Structured communication</div>
+        <h2>The answer first.<br><em>Always.</em></h2>
+        <p class="sub" style="margin-top:18px;margin-bottom:36px;">StratOS applies the Minto Pyramid Principle to every output. The governing thought — one sentence — drives the entire narrative. Every key line must be independently meaningful and jointly sufficient. No answer buried at slide 47.</p>
+        <div class="feature-list">
+          <div class="feat">
+            <div class="feat-t">SCQA structuring</div>
+            <p class="feat-d">Situation, Complication, Question, Answer — the narrative arc is derived from your strategic context, not from a template.</p>
+          </div>
+          <div class="feat">
+            <div class="feat-t">Deductive or inductive storylines</div>
+            <p class="feat-d">Argument-led or evidence-grouped presentation logic, selected by the narrative agent based on audience and stakes.</p>
+          </div>
+          <div class="feat">
+            <div class="feat-t">Insight-first slide titles — enforced</div>
+            <p class="feat-d">A self-critique loop rejects topic-based titles. "BCG Matrix" fails. "Two question marks require capital allocation decisions within 18 months" passes.</p>
+          </div>
+        </div>
+      </div>
+      <div class="r">
+        <div class="pyr">
+          <div class="pb pb-1">
+            Governing thought
+            <span class="pb-lbl">Answer</span>
+          </div>
+          <div class="pb pb-2">Key line 1 &nbsp;·&nbsp; Key line 2 &nbsp;·&nbsp; Key line 3</div>
+          <div class="pb pb-3">Supporting arguments and data points</div>
+          <div class="pb pb-4">Evidence · Framework results · Enrichment sources</div>
+        </div>
+        <div class="critique-box">
+          <div class="critique-hd">Self-critique loop active on every framework</div>
+          <p class="critique-txt">Every framework output is reviewed by a second LLM pass checking for hallucinations, internal contradictions, and framework fidelity before flowing downstream. HIGH severity issues surface to the user.</p>
+          <div class="tag-row">
+            <span class="ctag">Claim traceability</span>
+            <span class="ctag">MECE validation</span>
+            <span class="ctag">Cross-framework consistency</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TESTIMONIALS -->
+<section id="testimonials">
+  <div class="w">
+    <div class="sec-hd cx r">
+      <div class="eyebrow">From the field</div>
+      <h2>Used by teams who can't afford<br>to get strategy <em>wrong.</em></h2>
+    </div>
+    <div class="testi-grid r">
+
+      <div class="tc">
+        <span class="tc-mark">"</span>
+        <p class="tc-q">We ran three separate PESTEL analyses last year — each one contradicted the other because they used different data. StratOS gave us one session, one dependency graph, one version of the truth.</p>
+        <div class="tc-sep"></div>
+        <div class="tc-name">Laurent Mbeki</div>
+        <div class="tc-role">Chief Digital Officer · Global Industrial Group, Paris</div>
+      </div>
+
+      <div class="tc hi">
+        <span class="tc-mark">"</span>
+        <p class="tc-q">The Pyramid Principle output is what sold my partners. We have juniors who understand the frameworks but have never learned Minto. StratOS enforces the methodology automatically — the governing thought is always the first thing on the page.</p>
+        <div class="tc-sep"></div>
+        <div class="tc-name">Amina Touré</div>
+        <div class="tc-role">Managing Director · Strategy Boutique, London</div>
+      </div>
+
+      <div class="tc">
+        <span class="tc-mark">"</span>
+        <p class="tc-q">I asked it to analyse our competitive position in a market where we had almost no internal data. The enrichment agent pulled live sector multiples, two recent competitor funding announcements, and a regulatory update from the past week. The Porter analysis cited all three.</p>
+        <div class="tc-sep"></div>
+        <div class="tc-name">Olivier Nakamura</div>
+        <div class="tc-role">CTO · PE-backed Technology Platform, Amsterdam</div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section id="pricing">
+  <div class="w">
+    <div class="sec-hd cx r">
+      <div class="eyebrow">Pricing</div>
+      <h2>Strategy intelligence,<br><em>at every scale.</em></h2>
+      <p class="sub">All paid plans include the full 12-framework sequence, real-time enrichment, and HTML slide export. Enterprise includes single-tenant deployment.</p>
+    </div>
+    <div class="pricing-grid r">
+
+      <div class="pc">
+        <div class="pc-name">Free</div>
+        <div class="pc-price"><sup>€</sup>0<small>/mo</small></div>
+        <div class="pc-period">No credit card required</div>
+        <div class="pc-div"></div>
+        <ul class="pc-list">
+          <li>1 strategy session per month</li>
+          <li>3 frameworks — PESTEL, Porter, SWOT</li>
+          <li>1 slide export per month</li>
+          <li>10 MB document ingestion</li>
+          <li>Community support</li>
+        </ul>
+        <a href="#cta" class="pc-btn">Get started</a>
+      </div>
+
+      <div class="pc hot">
+        <div class="pc-badge">Most popular</div>
+        <div class="pc-name">Starter</div>
+        <div class="pc-price"><sup>€</sup>149<small>/mo</small></div>
+        <div class="pc-period">Billed annually — or €189 monthly</div>
+        <div class="pc-div"></div>
+        <ul class="pc-list">
+          <li class="hi">10 strategy sessions per month</li>
+          <li class="hi">All 12 frameworks</li>
+          <li class="hi">Hypothesis tree and testing</li>
+          <li class="hi">Pyramid Principle narrative</li>
+          <li class="hi">Unlimited slide exports</li>
+          <li>100 MB document ingestion</li>
+          <li>5 enrichment refreshes per session</li>
+          <li>Email support</li>
+        </ul>
+        <a href="#cta" class="pc-btn h">Request access</a>
+      </div>
+
+      <div class="pc">
+        <div class="pc-name">Professional</div>
+        <div class="pc-price"><sup>€</sup>449<small>/mo</small></div>
+        <div class="pc-period">Billed annually — or €549 monthly</div>
+        <div class="pc-div"></div>
+        <ul class="pc-list">
+          <li class="hi">Unlimited sessions</li>
+          <li class="hi">Bring your own Anthropic key</li>
+          <li class="hi">Team access — up to 10 users</li>
+          <li class="hi">Session versioning and history</li>
+          <li class="hi">Annotations and collaboration</li>
+          <li>1 GB document ingestion</li>
+          <li>Unlimited enrichment refreshes</li>
+          <li>Priority support and SLA</li>
+        </ul>
+        <a href="#cta" class="pc-btn">Request access</a>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section id="faq">
+  <div class="w">
+    <div class="faq-layout">
+      <div class="faq-sticky r">
+        <div class="eyebrow">FAQ</div>
+        <h2>Frequent <em>questions.</em></h2>
+        <p class="sub" style="margin-top:16px;">If the answer is not here, write to us and we will add it.</p>
+      </div>
+      <div class="faq-items r">
+
+        <div class="fi">
+          <div class="fi-q">
+            <span class="fi-qt">Is my company data used to train the model?</span>
+            <svg class="fi-ch" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M4 6.5L9 11.5L14 6.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <div class="fi-a"><div class="fi-a-inner"><div class="fi-a-pad">No. All API calls include the <code style="font-family:var(--ff-m);font-size:12px;background:rgba(255,255,255,0.06);padding:2px 6px;">anthropic-beta: fine-tuning-off</code> header. Your documents, session results, and company data are never used to train Anthropic's models. Company knowledge is stored in a tenant-isolated Qdrant collection and is deleted when you close your account.</div></div></div>
+        </div>
+
+        <div class="fi">
+          <div class="fi-q">
+            <span class="fi-qt">Can I supply my own Anthropic API key?</span>
+            <svg class="fi-ch" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M4 6.5L9 11.5L14 6.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <div class="fi-a"><div class="fi-a-inner"><div class="fi-a-pad">Yes, on the Professional plan and above. Your key is stored encrypted (AES-256-GCM) in our database — it is never logged, never passed through SSE payloads, and never visible after initial entry. LLM costs are then billed directly to your Anthropic account, not marked up by StratOS.</div></div></div>
+        </div>
+
+        <div class="fi">
+          <div class="fi-q">
+            <span class="fi-qt">How long does a complete strategy session take to run?</span>
+            <svg class="fi-ch" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M4 6.5L9 11.5L14 6.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <div class="fi-a"><div class="fi-a-inner"><div class="fi-a-pad">A full 12-framework session with enrichment, hypothesis tree, and narrative typically takes 18–35 minutes end-to-end. Enrichment and frameworks run concurrently where possible. The mandatory human review checkpoints add time proportional to how much you choose to amend — the system waits for your input before proceeding downstream.</div></div></div>
+        </div>
+
+        <div class="fi">
+          <div class="fi-q">
+            <span class="fi-qt">What happens if an enrichment data source is unavailable?</span>
+            <svg class="fi-ch" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M4 6.5L9 11.5L14 6.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <div class="fi-a"><div class="fi-a-inner"><div class="fi-a-pad">Individual source failures are soft-handled — they are logged and the affected enrichment signal is marked as <code style="font-family:var(--ff-m);font-size:12px;background:rgba(255,255,255,0.06);padding:2px 6px;">UNAVAILABLE</code>, but the workflow continues with whatever context is available. Framework results that rely on the missing signal annotate their claims with a data-availability warning. Partial enrichment is always preferable to a blocked analysis.</div></div></div>
+        </div>
+
+        <div class="fi">
+          <div class="fi-q">
+            <span class="fi-qt">How does MECE validation work for the hypothesis tree?</span>
+            <svg class="fi-ch" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M4 6.5L9 11.5L14 6.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <div class="fi-a"><div class="fi-a-inner"><div class="fi-a-pad">At each sibling level of the tree, two checks run automatically. For mutual exclusivity, hypothesis labels are embedded and pairwise cosine similarity is computed — pairs above a tunable threshold (default 0.72) are flagged as potential overlaps. For collective exhaustivity, a second LLM pass asks whether the sibling set jointly covers the parent hypothesis without gaps. Both results appear in a MECE report card on each tree node and are surfaced at the human review checkpoint.</div></div></div>
+        </div>
+
+        <div class="fi">
+          <div class="fi-q">
+            <span class="fi-qt">Can multiple team members work on the same session?</span>
+            <svg class="fi-ch" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M4 6.5L9 11.5L14 6.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <div class="fi-a"><div class="fi-a-inner"><div class="fi-a-pad">Yes, on the Professional plan. Sessions support owner, editor, and viewer roles within an organisation. Concurrent edits use optimistic locking via ETag headers — if two editors modify the same framework result simultaneously, the second write returns a 412 Precondition Failed response and the user is asked to review and resubmit. Annotations and inline comments are available for async collaboration.</div></div></div>
+        </div>
+
+        <div class="fi">
+          <div class="fi-q">
+            <span class="fi-qt">Can I export the analysis in formats other than HTML?</span>
+            <svg class="fi-ch" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M4 6.5L9 11.5L14 6.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <div class="fi-a"><div class="fi-a-inner"><div class="fi-a-pad">The HTML export is self-contained, offline-capable, and renders cleanly in any modern browser. PDF export is available via headless-Chrome rendering (Chromium is required on your machine or our infrastructure does it server-side). PPTX export and a full JSON data export of all framework results are on the roadmap for Q3 2026.</div></div></div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section id="cta">
+  <div class="glow-c"></div>
+  <div class="w">
+    <div class="eyebrow r">Early access</div>
+    <h2 class="r">Join the strategy leaders<br><em>already on the waitlist.</em></h2>
+    <p class="sub r">StratOS is in closed beta. We are onboarding organisations with complex strategy needs — consulting firms, enterprise CDOs, and transformation leads.</p>
+    <div class="wl-form r">
+      <input type="email" id="wl-email" placeholder="Your work email address" />
+      <button id="wl-btn" type="button">Join waitlist</button>
+    </div>
+    <p class="cta-fine r">No spam. No pitch decks. An onboarding call when your slot opens.</p>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="w">
+    <div class="foot-row">
+      <div class="foot-logo">Strat<span>OS</span></div>
+      <ul class="foot-links">
+        <li><a href="#">Product</a></li>
+        <li><a href="#">Documentation</a></li>
+        <li><a href="#">Pricing</a></li>
+        <li><a href="#">Privacy</a></li>
+        <li><a href="#">Terms</a></li>
+      </ul>
+      <span class="foot-copy">© 2026 Hotep Conseil · Paris</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+  /* ── SCROLL PROGRESS ── */
+  const fill = document.getElementById('prog-fill');
+  function updateProgress() {
+    const doc = document.documentElement;
+    const total = doc.scrollHeight - doc.clientHeight;
+    fill.style.width = (total > 0 ? (scrollY / total) * 100 : 0) + '%';
+  }
+  window.addEventListener('scroll', updateProgress, { passive: true });
+
+  /* ── NAV SCROLL ── */
+  const nav = document.getElementById('nav');
+  const onScroll = () => {
+    nav.classList.toggle('on', scrollY > 48);
+    updateProgress();
+  };
+  window.addEventListener('scroll', onScroll, { passive: true });
+
+  /* ── HAMBURGER / MOBILE MENU ── */
+  const hb       = document.getElementById('hamburger');
+  const mobMenu  = document.getElementById('mob-menu');
+  hb.addEventListener('click', () => {
+    const open = hb.classList.toggle('open');
+    mobMenu.classList.toggle('open', open);
+    document.body.style.overflow = open ? 'hidden' : '';
+  });
+  document.querySelectorAll('[data-mob]').forEach(a => {
+    a.addEventListener('click', () => {
+      hb.classList.remove('open');
+      mobMenu.classList.remove('open');
+      document.body.style.overflow = '';
+    });
+  });
+
+  /* ── HERO CANVAS — NODE CONSTELLATION ── */
+  (function() {
+    const canvas = document.getElementById('hero-canvas');
+    const ctx    = canvas.getContext('2d');
+    const GOLD   = 'rgba(196,163,90,';
+    const BLUE   = 'rgba(91,141,247,';
+    let W, H, nodes;
+    const COUNT = 28;
+    const MAX_DIST = 160;
+
+    function resize() {
+      W = canvas.width  = canvas.offsetWidth;
+      H = canvas.height = canvas.offsetHeight;
+    }
+
+    function mkNode() {
+      return {
+        x:  Math.random() * W,
+        y:  Math.random() * H,
+        vx: (Math.random() - 0.5) * 0.28,
+        vy: (Math.random() - 0.5) * 0.28,
+        r:  Math.random() * 1.5 + 0.8,
+        col: Math.random() > 0.72 ? GOLD : BLUE,
+        pulse: Math.random() * Math.PI * 2,
+      };
+    }
+
+    function init() {
+      resize();
+      nodes = Array.from({ length: COUNT }, mkNode);
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, W, H);
+      const t = Date.now() * 0.001;
+
+      // Edges
+      for (let i = 0; i < nodes.length; i++) {
+        for (let j = i + 1; j < nodes.length; j++) {
+          const a = nodes[i], b = nodes[j];
+          const d = Math.hypot(a.x - b.x, a.y - b.y);
+          if (d < MAX_DIST) {
+            const alpha = (1 - d / MAX_DIST) * 0.18;
+            ctx.beginPath();
+            ctx.moveTo(a.x, a.y);
+            ctx.lineTo(b.x, b.y);
+            ctx.strokeStyle = `rgba(196,163,90,${alpha})`;
+            ctx.lineWidth = 0.6;
+            ctx.stroke();
+          }
+        }
+      }
+
+      // Nodes
+      nodes.forEach(n => {
+        const pulse = 0.7 + 0.3 * Math.sin(n.pulse + t * 1.2);
+        const r     = n.r * pulse;
+        ctx.beginPath();
+        ctx.arc(n.x, n.y, r, 0, Math.PI * 2);
+        ctx.fillStyle = n.col + '0.65)';
+        ctx.fill();
+        // Glow
+        const grad = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, r * 4);
+        grad.addColorStop(0, n.col + '0.18)');
+        grad.addColorStop(1, n.col + '0)');
+        ctx.beginPath();
+        ctx.arc(n.x, n.y, r * 4, 0, Math.PI * 2);
+        ctx.fillStyle = grad;
+        ctx.fill();
+
+        // Move
+        n.x += n.vx; n.y += n.vy;
+        if (n.x < -10) n.x = W + 10;
+        if (n.x > W + 10) n.x = -10;
+        if (n.y < -10) n.y = H + 10;
+        if (n.y > H + 10) n.y = -10;
+      });
+
+      requestAnimationFrame(draw);
+    }
+
+    window.addEventListener('resize', () => { resize(); });
+    init(); draw();
+  })();
+
+  /* ── PIPELINE ANIMATION ── */
+  const stages   = document.querySelectorAll('.stage');
+  const progSegs = document.querySelectorAll('.viz-prog-seg');
+  let cur = 0;
+
+  function tick() {
+    stages.forEach((s, i)   => s.classList.toggle('on', i === cur));
+    progSegs.forEach((s, i) => s.classList.toggle('on', i <= cur));
+  }
+  tick();
+  setInterval(() => { cur = (cur + 1) % stages.length; tick(); }, 1700);
+
+  /* ── INTERSECTION OBSERVER ── */
+  const obs = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (!e.isIntersecting) return;
+      const siblings = Array.from(e.target.parentElement.querySelectorAll('.r:not(.in)'));
+      siblings.forEach((el, i) => {
+        setTimeout(() => el.classList.add('in'), i * 90);
+      });
+      obs.unobserve(e.target);
+    });
+  }, { threshold: 0.08, rootMargin: '0px 0px -50px 0px' });
+
+  document.querySelectorAll('.r').forEach(el => obs.observe(el));
+
+  /* ── FAQ ACCORDION ── */
+  document.querySelectorAll('.fi-q').forEach(trigger => {
+    trigger.addEventListener('click', () => {
+      const item   = trigger.parentElement;
+      const isOpen = item.classList.contains('open');
+      // Close all others
+      document.querySelectorAll('.fi.open').forEach(f => f.classList.remove('open'));
+      if (!isOpen) item.classList.add('open');
+    });
+  });
+
+  /* ── WAITLIST FORM ── */
+  const wlBtn   = document.getElementById('wl-btn');
+  const wlEmail = document.getElementById('wl-email');
+
+  wlBtn.addEventListener('click', () => {
+    const v = wlEmail.value.trim();
+    const valid = v.length > 3 && v.includes('@') && v.includes('.');
+    if (!valid) {
+      wlEmail.style.borderColor = 'rgba(224,82,82,0.6)';
+      wlEmail.focus();
+      return;
+    }
+    wlBtn.textContent = 'On the list.';
+    wlBtn.style.background = '#3EC977';
+    wlBtn.style.cursor = 'default';
+    wlEmail.disabled = true;
+    wlEmail.style.opacity = '0.5';
+  });
+
+  wlEmail.addEventListener('keydown', e => {
+    if (e.key === 'Enter') wlBtn.click();
+  });
+
+  wlEmail.addEventListener('input', () => {
+    wlEmail.style.borderColor = '';
+  });
+
+  /* ── SMOOTH SCROLL ── */
+  document.querySelectorAll('a[href^="#"]').forEach(a => {
+    a.addEventListener('click', e => {
+      const t = document.querySelector(a.getAttribute('href'));
+      if (t) { e.preventDefault(); t.scrollIntoView({ behavior: 'smooth' }); }
+    });
+  });
+</script>
+</body>
+</html>
